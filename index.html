@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#2563eb" />
+  <title>Kaç Yaktı? - Yakıt Takip</title>
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --success: #16a34a;
+      --warning: #f59e0b;
+      --danger: #dc2626;
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #667085;
+      --border: #dfe5ef;
+      --shadow: 0 12px 30px rgba(31, 41, 55, 0.08);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px clamp(18px, 4vw, 42px);
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), #0f49b8);
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      display: grid;
+      width: 44px;
+      height: 44px;
+      place-items: center;
+      border-radius: 14px;
+      font-size: 22px;
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+
+    .brand p {
+      margin: 3px 0 0;
+      font-size: 0.78rem;
+      opacity: 0.82;
+    }
+
+    .container {
+      width: min(1180px, calc(100% - 28px));
+      margin: 24px auto 100px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.45fr 0.75fr;
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    .hero-card {
+      position: relative;
+      overflow: hidden;
+      padding: 28px;
+      border-radius: 24px;
+      color: #fff;
+      background:
+        radial-gradient(circle at 92% 5%, rgba(255,255,255,.22), transparent 28%),
+        linear-gradient(135deg, #1d4ed8, #2563eb 55%, #3b82f6);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-card::after {
+      content: "⛽";
+      position: absolute;
+      right: 28px;
+      bottom: 12px;
+      font-size: 92px;
+      opacity: 0.12;
+      transform: rotate(-8deg);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .hero-card h2 {
+      max-width: 520px;
+      margin: 16px 0 8px;
+      font-size: clamp(1.7rem, 4vw, 2.5rem);
+      line-height: 1.08;
+    }
+
+    .hero-card p {
+      max-width: 600px;
+      margin: 0 0 22px;
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .vehicle-summary {
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    .vehicle-summary h3 {
+      margin: 0 0 12px;
+    }
+
+    .vehicle-name {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
+    .vehicle-detail {
+      margin: 7px 0 18px;
+      color: var(--muted);
+    }
+
+    .odometer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #eef4ff;
+    }
+
+    .odometer strong {
+      font-size: 1.08rem;
+    }
+
+    .section {
+      margin-top: 24px;
+      scroll-margin-top: 95px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 1.3rem;
+    }
+
+    .section-head p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .stat-card {
+      min-height: 130px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    .stat-icon {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      margin-bottom: 14px;
+      place-items: center;
+      border-radius: 12px;
+      background: #eef4ff;
+    }
+
+    .stat-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .stat-card strong {
+      display: block;
+      margin-top: 7px;
+      font-size: clamp(1.2rem, 2vw, 1.65rem);
+    }
+
+    .card {
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.86rem;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 46px;
+      padding: 11px 13px;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      outline: none;
+      background: #fff;
+      transition: 0.2s ease;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 46px;
+      padding: 11px 13px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .checkbox-row input {
+      width: 18px;
+      min-height: auto;
+      height: 18px;
+    }
+
+    .form-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 10px 17px;
+      border: 0;
+      border-radius: 12px;
+      font-weight: 800;
+      text-decoration: none;
+      transition: transform .16s ease, opacity .16s ease, background .16s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-light {
+      color: var(--primary-dark);
+      background: #fff;
+    }
+
+    .btn-secondary {
+      color: var(--text);
+      background: #edf1f7;
+    }
+
+    .btn-danger {
+      color: #fff;
+      background: var(--danger);
+    }
+
+    .btn-small {
+      min-height: 35px;
+      padding: 7px 11px;
+      font-size: 0.8rem;
+    }
+
+    .record-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .record {
+      display: grid;
+      grid-template-columns: 1.1fr repeat(4, .8fr) auto;
+      align-items: center;
+      gap: 12px;
+      padding: 17px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--card);
+      box-shadow: 0 8px 20px rgba(31,41,55,.05);
+    }
+
+    .record-main strong {
+      display: block;
+    }
+
+    .record-main small {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+    }
+
+    .record-metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    .record-metric strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.95rem;
+    }
+
+    .record-actions {
+      display: flex;
+      gap: 7px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 7px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 800;
+    }
+
+    .badge.success {
+      color: #166534;
+      background: #dcfce7;
+    }
+
+    .badge.warning {
+      color: #92400e;
+      background: #fef3c7;
+    }
+
+    .empty-state {
+      padding: 36px 18px;
+      text-align: center;
+      color: var(--muted);
+      border: 2px dashed var(--border);
+      border-radius: 18px;
+      background: rgba(255,255,255,.6);
+    }
+
+    .empty-state .icon {
+      margin-bottom: 8px;
+      font-size: 42px;
+    }
+
+    .notice {
+      margin-top: 14px;
+      padding: 12px 14px;
+      color: #7c2d12;
+      border: 1px solid #fed7aa;
+      border-radius: 12px;
+      background: #fff7ed;
+      font-size: .86rem;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 50%;
+      bottom: 14px;
+      z-index: 30;
+      display: none;
+      width: calc(100% - 24px);
+      max-width: 520px;
+      padding: 8px;
+      border: 1px solid rgba(223,229,239,.9);
+      border-radius: 18px;
+      background: rgba(255,255,255,.94);
+      box-shadow: 0 16px 40px rgba(31,41,55,.18);
+      backdrop-filter: blur(16px);
+      transform: translateX(-50%);
+    }
+
+    .bottom-nav a {
+      flex: 1;
+      padding: 8px 4px;
+      color: var(--muted);
+      border-radius: 11px;
+      text-align: center;
+      text-decoration: none;
+      font-size: .72rem;
+      font-weight: 800;
+    }
+
+    .bottom-nav a span {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 18px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 50;
+      max-width: 320px;
+      padding: 13px 16px;
+      color: #fff;
+      border-radius: 12px;
+      background: #172033;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(20px);
+      transition: .25s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(15, 23, 42, 0.55);
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      width: min(620px, 100%);
+      max-height: 90vh;
+      overflow: auto;
+      padding: 22px;
+      border-radius: 20px;
+      background: #fff;
+      box-shadow: 0 25px 80px rgba(0,0,0,.25);
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .modal-head h2 {
+      margin: 0;
+    }
+
+    .icon-button {
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 11px;
+      font-size: 20px;
+      background: #edf1f7;
+    }
+
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .record {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .record-main,
+      .record-actions {
+        grid-column: 1 / -1;
+      }
+
+      .record-actions {
+        justify-content: flex-end;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .topbar {
+        padding: 12px 16px;
+      }
+
+      .topbar .btn {
+        display: none;
+      }
+
+      .container {
+        width: min(100% - 18px, 1180px);
+        margin-top: 14px;
+      }
+
+      .hero-card,
+      .vehicle-summary,
+      .card {
+        padding: 18px;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+
+      .stat-card {
+        min-height: 118px;
+        padding: 14px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-group.full {
+        grid-column: auto;
+      }
+
+      .record {
+        grid-template-columns: 1fr 1fr;
+        padding: 14px;
+      }
+
+      .record-metric {
+        padding: 10px;
+        border-radius: 10px;
+        background: #f7f9fc;
+      }
+
+      .bottom-nav {
+        display: flex;
+      }
+
+      .toast {
+        right: 12px;
+        bottom: 92px;
+        left: 12px;
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon">⛽</div>
+        <div>
+          <h1>Kaç Yaktı?</h1>
+          <p>Yakıt tüketim ve masraf takibi</p>
+        </div>
+      </div>
+
+      <button class="btn btn-light" type="button" onclick="openVehicleModal()">
+        🚘 Aracı Düzenle
+      </button>
+    </header>
+
+    <main class="container">
+      <section class="hero" id="anasayfa">
+        <div class="hero-card">
+          <span class="eyebrow">İlk prototip • Veriler cihazında saklanır</span>
+          <h2>Aracının ne kadar yaktığını kolayca takip et.</h2>
+          <p>
+            Yakıt alımlarını kaydet, 100 km tüketimini, kilometre maliyetini
+            ve toplam harcamanı anında gör.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-light" href="#yakit-ekle">＋ Yakıt Kaydı Ekle</a>
+            <a class="btn btn-secondary" href="#gecmis">Geçmişi Gör</a>
+          </div>
+        </div>
+
+        <aside class="vehicle-summary">
+          <h3>Aktif Araç</h3>
+          <p class="vehicle-name" id="vehicleName">Henüz araç eklenmedi</p>
+          <p class="vehicle-detail" id="vehicleDetail">
+            Başlamak için araç bilgilerini gir.
+          </p>
+
+          <div class="odometer">
+            <span>Güncel kilometre</span>
+            <strong id="currentOdometer">—</strong>
+          </div>
+
+          <button
+            class="btn btn-primary"
+            style="width:100%; margin-top:16px"
+            type="button"
+            onclick="openVehicleModal()"
+          >
+            🚘 Araç Bilgileri
+          </button>
+        </aside>
+      </section>
+
+      <section class="section" id="istatistikler">
+        <div class="section-head">
+          <div>
+            <h2>Genel Bakış</h2>
+            <p>Yakıt kayıtlarından otomatik hesaplanan değerler</p>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card">
+            <div class="stat-icon">📉</div>
+            <span>Son tüketim</span>
+            <strong id="lastConsumption">—</strong>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-icon">📊</div>
+            <span>Ortalama tüketim</span>
+            <strong id="avgConsumption">—</strong>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-icon">💳</div>
+            <span>Toplam harcama</span>
+            <strong id="totalCost">0 TL</strong>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-icon">🛣️</div>
+            <span>Toplam mesafe</span>
+            <strong id="totalDistance">0 km</strong>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-icon">💰</div>
+            <span>Ortalama km maliyeti</span>
+            <strong id="avgCostPerKm">—</strong>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-icon">🧪</div>
+            <span>Toplam yakıt</span>
+            <strong id="totalLiters">0 L</strong>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-icon">📅</div>
+            <span>Bu ay harcanan</span>
+            <strong id="monthlyCost">0 TL</strong>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-icon">🏷️</div>
+            <span>Son litre fiyatı</span>
+            <strong id="lastLiterPrice">—</strong>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="yakit-ekle">
+        <div class="section-head">
+          <div>
+            <h2 id="fuelFormTitle">Yeni Yakıt Kaydı</h2>
+            <p>Yakıt alım bilgilerini gir; hesaplamalar otomatik yapılsın.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <form id="fuelForm">
+            <input type="hidden" id="editRecordId" />
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="fuelDate">Tarih *</label>
+                <input id="fuelDate" type="date" required />
+              </div>
+
+              <div class="form-group">
+                <label for="odometer">Güncel kilometre *</label>
+                <input
+                  id="odometer"
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="Örn. 185300"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="liters">Alınan yakıt (litre) *</label>
+                <input
+                  id="liters"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="Örn. 23"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="amount">Toplam tutar (TL) *</label>
+                <input
+                  id="amount"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="Örn. 750"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="fuelType">Yakıt türü *</label>
+                <select id="fuelType" required>
+                  <option value="Benzin">Benzin</option>
+                  <option value="Dizel">Dizel</option>
+                  <option value="LPG">LPG</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="station">Akaryakıt istasyonu</label>
+                <input id="station" type="text" placeholder="Örn. Petrol Ofisi" />
+              </div>
+
+              <div class="form-group">
+                <label for="city">Şehir</label>
+                <input id="city" type="text" placeholder="Örn. Ankara" />
+              </div>
+
+              <div class="form-group">
+                <label>Dolum durumu</label>
+                <div class="checkbox-row">
+                  <input id="fullTank" type="checkbox" checked />
+                  <span>Depo tamamen dolduruldu</span>
+                </div>
+              </div>
+
+              <div class="form-group full">
+                <label for="note">Not</label>
+                <textarea id="note" placeholder="İsteğe bağlı açıklama..."></textarea>
+              </div>
+            </div>
+
+            <div class="notice">
+              Doğru tüketim hesabı için kilometre bilgilerini sıralı girmen ve
+              mümkünse “dolumdan doluma” yöntemini kullanman gerekir.
+            </div>
+
+            <div class="form-actions">
+              <button
+                id="cancelEditButton"
+                class="btn btn-secondary"
+                type="button"
+                style="display:none"
+                onclick="cancelEdit()"
+              >
+                İptal
+              </button>
+              <button class="btn btn-primary" type="submit">
+                💾 Kaydı Kaydet
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="section" id="gecmis">
+        <div class="section-head">
+          <div>
+            <h2>Yakıt Geçmişi</h2>
+            <p>Kayıtlarını düzenleyebilir veya silebilirsin.</p>
+          </div>
+          <button class="btn btn-secondary btn-small" type="button" onclick="clearAllRecords()">
+            Tümünü Temizle
+          </button>
+        </div>
+
+        <div id="recordList" class="record-list"></div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <a href="#anasayfa"><span>🏠</span>Ana Sayfa</a>
+      <a href="#istatistikler"><span>📊</span>İstatistik</a>
+      <a href="#yakit-ekle"><span>➕</span>Yakıt Ekle</a>
+      <a href="#gecmis"><span>🧾</span>Geçmiş</a>
+    </nav>
+  </div>
+
+  <div class="modal" id="vehicleModal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-head">
+        <h2>Araç Bilgileri</h2>
+        <button class="icon-button" type="button" onclick="closeVehicleModal()">×</button>
+      </div>
+
+      <form id="vehicleForm">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label for="vehicleNickname">Araç adı *</label>
+            <input
+              id="vehicleNickname"
+              type="text"
+              placeholder="Örn. Benim Corsam"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="brand">Marka *</label>
+            <input id="brand" type="text" placeholder="Örn. Opel" required />
+          </div>
+
+          <div class="form-group">
+            <label for="model">Model *</label>
+            <input
+              id="model"
+              type="text"
+              placeholder="Örn. Corsa 1.2 Twinport"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="year">Model yılı</label>
+            <input id="year" type="number" min="1900" max="2100" placeholder="2006" />
+          </div>
+
+          <div class="form-group">
+            <label for="vehicleFuelType">Yakıt türü</label>
+            <select id="vehicleFuelType">
+              <option value="Benzin">Benzin</option>
+              <option value="Dizel">Dizel</option>
+              <option value="LPG">LPG</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="startOdometer">Başlangıç kilometresi *</label>
+            <input
+              id="startOdometer"
+              type="number"
+              min="0"
+              step="1"
+              placeholder="185000"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="plate">Plaka</label>
+            <input id="plate" type="text" placeholder="06 ABC 123" />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-secondary" type="button" onclick="closeVehicleModal()">
+            Vazgeç
+          </button>
+          <button class="btn btn-primary" type="submit">
+            🚘 Aracı Kaydet
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const STORAGE_KEYS = {
+      vehicle: "kacYakti_vehicle",
+      records: "kacYakti_records"
+    };
+
+    let vehicle = loadJSON(STORAGE_KEYS.vehicle, null);
+    let records = loadJSON(STORAGE_KEYS.records, []);
+
+    const currency = new Intl.NumberFormat("tr-TR", {
+      style: "currency",
+      currency: "TRY",
+      maximumFractionDigits: 2
+    });
+
+    const number = new Intl.NumberFormat("tr-TR", {
+      maximumFractionDigits: 2
+    });
+
+    function loadJSON(key, fallback) {
+      try {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEYS.vehicle, JSON.stringify(vehicle));
+      localStorage.setItem(STORAGE_KEYS.records, JSON.stringify(records));
+    }
+
+    function formatDate(dateString) {
+      return new Intl.DateTimeFormat("tr-TR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      }).format(new Date(dateString + "T12:00:00"));
+    }
+
+    function escapeHTML(value = "") {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function getSortedRecords() {
+      return [...records].sort((a, b) => {
+        if (a.odometer !== b.odometer) return a.odometer - b.odometer;
+        return new Date(a.date) - new Date(b.date);
+      });
+    }
+
+    function calculateRecords() {
+      const sorted = getSortedRecords();
+      const startKm = Number(vehicle?.startOdometer || 0);
+
+      return sorted.map((record, index) => {
+        const previousKm = index === 0
+          ? startKm
+          : Number(sorted[index - 1].odometer);
+
+        const distance = Number(record.odometer) - previousKm;
+        const validDistance = distance > 0 ? distance : 0;
+        const consumption = validDistance > 0
+          ? (Number(record.liters) / validDistance) * 100
+          : 0;
+        const costPerKm = validDistance > 0
+          ? Number(record.amount) / validDistance
+          : 0;
+        const literPrice = Number(record.amount) / Number(record.liters);
+
+        return {
+          ...record,
+          distance: validDistance,
+          consumption,
+          costPerKm,
+          literPrice
+        };
+      });
+    }
+
+    function renderAll() {
+      renderVehicle();
+      renderStats();
+      renderRecords();
+      syncFuelType();
+    }
+
+    function renderVehicle() {
+      const name = document.getElementById("vehicleName");
+      const detail = document.getElementById("vehicleDetail");
+      const current = document.getElementById("currentOdometer");
+
+      if (!vehicle) {
+        name.textContent = "Henüz araç eklenmedi";
+        detail.textContent = "Başlamak için araç bilgilerini gir.";
+        current.textContent = "—";
+        return;
+      }
+
+      name.textContent = vehicle.nickname;
+      detail.textContent = [
+        vehicle.brand,
+        vehicle.model,
+        vehicle.year,
+        vehicle.fuelType,
+        vehicle.plate
+      ].filter(Boolean).join(" • ");
+
+      const sorted = getSortedRecords();
+      const currentKm = sorted.length
+        ? sorted[sorted.length - 1].odometer
+        : vehicle.startOdometer;
+
+      current.textContent = `${number.format(currentKm)} km`;
+    }
+
+    function renderStats() {
+      const calculated = calculateRecords();
+      const valid = calculated.filter(item => item.distance > 0);
+
+      const totalCost = calculated.reduce((sum, item) => sum + Number(item.amount), 0);
+      const totalLiters = calculated.reduce((sum, item) => sum + Number(item.liters), 0);
+      const totalDistance = valid.reduce((sum, item) => sum + item.distance, 0);
+
+      const avgConsumption = totalDistance > 0
+        ? (totalLiters / totalDistance) * 100
+        : 0;
+
+      const avgCostPerKm = totalDistance > 0
+        ? totalCost / totalDistance
+        : 0;
+
+      const last = calculated.at(-1);
+
+      const now = new Date();
+      const monthlyCost = calculated
+        .filter(item => {
+          const date = new Date(item.date + "T12:00:00");
+          return date.getMonth() === now.getMonth()
+            && date.getFullYear() === now.getFullYear();
+        })
+        .reduce((sum, item) => sum + Number(item.amount), 0);
+
+      setText("lastConsumption", last?.consumption
+        ? `${number.format(last.consumption)} L/100 km`
+        : "—");
+
+      setText("avgConsumption", avgConsumption
+        ? `${number.format(avgConsumption)} L/100 km`
+        : "—");
+
+      setText("totalCost", currency.format(totalCost));
+      setText("totalDistance", `${number.format(totalDistance)} km`);
+      setText("avgCostPerKm", avgCostPerKm
+        ? `${currency.format(avgCostPerKm)}/km`
+        : "—");
+      setText("totalLiters", `${number.format(totalLiters)} L`);
+      setText("monthlyCost", currency.format(monthlyCost));
+      setText("lastLiterPrice", last?.literPrice
+        ? `${currency.format(last.literPrice)}/L`
+        : "—");
+    }
+
+    function renderRecords() {
+      const container = document.getElementById("recordList");
+      const calculated = calculateRecords().sort((a, b) => {
+        if (a.odometer !== b.odometer) return b.odometer - a.odometer;
+        return new Date(b.date) - new Date(a.date);
+      });
+
+      if (!calculated.length) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">🧾</div>
+            <strong>Henüz yakıt kaydı yok.</strong>
+            <p>İlk kaydını eklediğinde sonuçlar burada görünecek.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = calculated.map(item => `
+        <article class="record">
+          <div class="record-main">
+            <strong>${formatDate(item.date)}</strong>
+            <small>
+              ${escapeHTML(item.fuelType)}
+              ${item.station ? " • " + escapeHTML(item.station) : ""}
+              ${item.city ? " • " + escapeHTML(item.city) : ""}
+            </small>
+            <span class="badge ${item.fullTank ? "success" : "warning"}">
+              ${item.fullTank ? "✓ Tam depo" : "≈ Yaklaşık hesap"}
+            </span>
+          </div>
+
+          <div class="record-metric">
+            <span>Yakıt</span>
+            <strong>${number.format(item.liters)} L</strong>
+          </div>
+
+          <div class="record-metric">
+            <span>Tutar</span>
+            <strong>${currency.format(item.amount)}</strong>
+          </div>
+
+          <div class="record-metric">
+            <span>Mesafe</span>
+            <strong>${item.distance ? number.format(item.distance) + " km" : "—"}</strong>
+          </div>
+
+          <div class="record-metric">
+            <span>Tüketim</span>
+            <strong>${item.consumption ? number.format(item.consumption) + " L/100 km" : "—"}</strong>
+          </div>
+
+          <div class="record-actions">
+            <button class="btn btn-secondary btn-small" type="button" onclick="editRecord('${item.id}')">
+              Düzenle
+            </button>
+            <button class="btn btn-danger btn-small" type="button" onclick="deleteRecord('${item.id}')">
+              Sil
+            </button>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function setText(id, value) {
+      document.getElementById(id).textContent = value;
+    }
+
+    function syncFuelType() {
+      if (vehicle && !document.getElementById("editRecordId").value) {
+        document.getElementById("fuelType").value = vehicle.fuelType || "Benzin";
+      }
+    }
+
+    function openVehicleModal() {
+      const modal = document.getElementById("vehicleModal");
+
+      if (vehicle) {
+        document.getElementById("vehicleNickname").value = vehicle.nickname || "";
+        document.getElementById("brand").value = vehicle.brand || "";
+        document.getElementById("model").value = vehicle.model || "";
+        document.getElementById("year").value = vehicle.year || "";
+        document.getElementById("vehicleFuelType").value = vehicle.fuelType || "Benzin";
+        document.getElementById("startOdometer").value = vehicle.startOdometer || "";
+        document.getElementById("plate").value = vehicle.plate || "";
+      }
+
+      modal.classList.add("show");
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeVehicleModal() {
+      const modal = document.getElementById("vehicleModal");
+      modal.classList.remove("show");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    document.getElementById("vehicleModal").addEventListener("click", event => {
+      if (event.target.id === "vehicleModal") closeVehicleModal();
+    });
+
+    document.getElementById("vehicleForm").addEventListener("submit", event => {
+      event.preventDefault();
+
+      vehicle = {
+        nickname: document.getElementById("vehicleNickname").value.trim(),
+        brand: document.getElementById("brand").value.trim(),
+        model: document.getElementById("model").value.trim(),
+        year: document.getElementById("year").value,
+        fuelType: document.getElementById("vehicleFuelType").value,
+        startOdometer: Number(document.getElementById("startOdometer").value),
+        plate: document.getElementById("plate").value.trim().toUpperCase()
+      };
+
+      saveData();
+      closeVehicleModal();
+      renderAll();
+      showToast("Araç bilgileri kaydedildi.");
+    });
+
+    document.getElementById("fuelForm").addEventListener("submit", event => {
+      event.preventDefault();
+
+      if (!vehicle) {
+        showToast("Önce araç bilgilerini kaydetmelisin.");
+        openVehicleModal();
+        return;
+      }
+
+      const editId = document.getElementById("editRecordId").value;
+      const odometer = Number(document.getElementById("odometer").value);
+      const otherRecords = records.filter(item => item.id !== editId);
+
+      if (odometer < Number(vehicle.startOdometer)) {
+        showToast("Kilometre, başlangıç kilometresinden düşük olamaz.");
+        return;
+      }
+
+      const duplicateKm = otherRecords.some(item => Number(item.odometer) === odometer);
+      if (duplicateKm) {
+        showToast("Bu kilometrede zaten bir yakıt kaydı var.");
+        return;
+      }
+
+      const record = {
+        id: editId || crypto.randomUUID(),
+        date: document.getElementById("fuelDate").value,
+        odometer,
+        liters: Number(document.getElementById("liters").value),
+        amount: Number(document.getElementById("amount").value),
+        fuelType: document.getElementById("fuelType").value,
+        station: document.getElementById("station").value.trim(),
+        city: document.getElementById("city").value.trim(),
+        fullTank: document.getElementById("fullTank").checked,
+        note: document.getElementById("note").value.trim()
+      };
+
+      if (editId) {
+        records = records.map(item => item.id === editId ? record : item);
+        showToast("Yakıt kaydı güncellendi.");
+      } else {
+        records.push(record);
+        showToast("Yakıt kaydı eklendi.");
+      }
+
+      saveData();
+      resetFuelForm();
+      renderAll();
+      document.getElementById("gecmis").scrollIntoView({ behavior: "smooth" });
+    });
+
+    function editRecord(id) {
+      const record = records.find(item => item.id === id);
+      if (!record) return;
+
+      document.getElementById("editRecordId").value = record.id;
+      document.getElementById("fuelDate").value = record.date;
+      document.getElementById("odometer").value = record.odometer;
+      document.getElementById("liters").value = record.liters;
+      document.getElementById("amount").value = record.amount;
+      document.getElementById("fuelType").value = record.fuelType;
+      document.getElementById("station").value = record.station || "";
+      document.getElementById("city").value = record.city || "";
+      document.getElementById("fullTank").checked = Boolean(record.fullTank);
+      document.getElementById("note").value = record.note || "";
+
+      document.getElementById("fuelFormTitle").textContent = "Yakıt Kaydını Düzenle";
+      document.getElementById("cancelEditButton").style.display = "inline-flex";
+      document.getElementById("yakit-ekle").scrollIntoView({ behavior: "smooth" });
+    }
+
+    function cancelEdit() {
+      resetFuelForm();
+      showToast("Düzenleme iptal edildi.");
+    }
+
+    function resetFuelForm() {
+      document.getElementById("fuelForm").reset();
+      document.getElementById("editRecordId").value = "";
+      document.getElementById("fuelDate").value = getToday();
+      document.getElementById("fuelFormTitle").textContent = "Yeni Yakıt Kaydı";
+      document.getElementById("cancelEditButton").style.display = "none";
+      document.getElementById("fullTank").checked = true;
+      syncFuelType();
+    }
+
+    function deleteRecord(id) {
+      const record = records.find(item => item.id === id);
+      if (!record) return;
+
+      const approved = confirm(
+        `${formatDate(record.date)} tarihli yakıt kaydı silinsin mi?`
+      );
+
+      if (!approved) return;
+
+      records = records.filter(item => item.id !== id);
+      saveData();
+      renderAll();
+      showToast("Yakıt kaydı silindi.");
+    }
+
+    function clearAllRecords() {
+      if (!records.length) {
+        showToast("Silinecek kayıt bulunmuyor.");
+        return;
+      }
+
+      const approved = confirm(
+        "Tüm yakıt kayıtları kalıcı olarak silinecek. Devam edilsin mi?"
+      );
+
+      if (!approved) return;
+
+      records = [];
+      saveData();
+      resetFuelForm();
+      renderAll();
+      showToast("Tüm yakıt kayıtları silindi.");
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2600);
+    }
+
+    function getToday() {
+      const now = new Date();
+      const offset = now.getTimezoneOffset();
+      return new Date(now.getTime() - offset * 60000)
+        .toISOString()
+        .split("T")[0];
+    }
+
+    document.getElementById("fuelDate").value = getToday();
+
+    if (!vehicle) {
+      openVehicleModal();
+    }
+
+    renderAll();
+  </script>
+</body>
+</html>
