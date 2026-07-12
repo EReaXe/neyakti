@@ -1,228 +1,183 @@
-const UI = (() => {
-  const currencyFormatter = new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: "TRY",
-    maximumFractionDigits: 2
-  });
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="Kaç Yaktı? yakıt tüketim ve maliyet takip uygulaması">
+  <title>Kaç Yaktı?</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>⛽ Kaç Yaktı?</h1>
+      <p>Yakıt tüketim ve maliyet takibi</p>
+    </div>
 
-  const numberFormatter = new Intl.NumberFormat("tr-TR", {
-    maximumFractionDigits: 2
-  });
+    <div class="topbar-actions">
+      <span id="userEmail" class="user-email"></span>
+      <button id="themeButton" class="icon-button" type="button" aria-label="Tema değiştir">🌙</button>
+      <button id="logoutButton" class="button button-light button-small" type="button">Çıkış yap</button>
+    </div>
+  </header>
 
-  let toastTimer;
+  <main class="container">
+    <section class="hero">
+      <div class="hero-card">
+        <span class="eyebrow">Bulut tabanlı yakıt takibi</span>
+        <h2>Aracının ne kadar yaktığını her cihazdan takip et.</h2>
+        <p>Yakıt alımların ve araç bilgilerin hesabına bağlı olarak Supabase üzerinde saklanır.</p>
+        <a class="button button-light" href="#fuel-section">Yakıt kaydı ekle</a>
+      </div>
 
-  function escapeHTML(value = "") {
-    return String(value)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function formatDate(dateString) {
-    return new Intl.DateTimeFormat("tr-TR", {
-      day: "numeric",
-      month: "long",
-      year: "numeric"
-    }).format(new Date(`${dateString}T12:00:00`));
-  }
-
-  function setText(id, value) {
-    document.getElementById(id).textContent = value;
-  }
-
-  function showToast(message) {
-    const toast = document.getElementById("toast");
-    toast.textContent = message;
-    toast.classList.add("show");
-
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
-  }
-
-  function renderVehicle(vehicle, records) {
-    if (!vehicle) {
-      setText("vehicleName", "Henüz araç eklenmedi");
-      setText("vehicleDetail", "Başlamak için araç bilgilerini gir.");
-      setText("currentOdometer", "—");
-      return;
-    }
-
-    setText("vehicleName", vehicle.nickname);
-
-    const detail = [
-      vehicle.brand,
-      vehicle.model,
-      vehicle.year,
-      vehicle.fuelType,
-      vehicle.plate
-    ]
-      .filter(Boolean)
-      .join(" • ");
-
-    setText("vehicleDetail", detail);
-
-    const sorted = CalculationService.sortRecords(records);
-    const currentOdometer = sorted.length
-      ? sorted.at(-1).odometer
-      : vehicle.startOdometer;
-
-    setText("currentOdometer", `${numberFormatter.format(currentOdometer)} km`);
-  }
-
-  function renderStats(stats) {
-    setText(
-      "lastConsumption",
-      stats.latestValidPeriod
-        ? `${numberFormatter.format(stats.latestValidPeriod.consumption)} L/100 km`
-        : "—"
-    );
-
-    setText(
-      "averageConsumption",
-      stats.averageConsumption
-        ? `${numberFormatter.format(stats.averageConsumption)} L/100 km`
-        : "—"
-    );
-
-    setText("totalCost", currencyFormatter.format(stats.totalCost));
-    setText("totalDistance", `${numberFormatter.format(stats.totalDistance)} km`);
-
-    setText(
-      "averageCostPerKm",
-      stats.averageCostPerKm
-        ? `${currencyFormatter.format(stats.averageCostPerKm)}/km`
-        : "—"
-    );
-
-    setText("totalLiters", `${numberFormatter.format(stats.totalLiters)} L`);
-    setText("monthlyCost", currencyFormatter.format(stats.monthlyCost));
-
-    setText(
-      "lastLiterPrice",
-      stats.latestRecord?.literPrice
-        ? `${currencyFormatter.format(stats.latestRecord.literPrice)}/L`
-        : "—"
-    );
-  }
-
-  function renderRecords(calculatedRecords, handlers) {
-    const container = document.getElementById("recordList");
-    const sorted = [...calculatedRecords].sort((a, b) => {
-      const odometerDifference = Number(b.odometer) - Number(a.odometer);
-      if (odometerDifference !== 0) return odometerDifference;
-      return new Date(b.date) - new Date(a.date);
-    });
-
-    if (!sorted.length) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <strong>Henüz yakıt kaydı yok.</strong>
-          <p>İlk kaydını eklediğinde sonuçlar burada görünecek.</p>
+      <aside class="card vehicle-card">
+        <div class="section-title">
+          <div>
+            <span class="muted">Aktif araç</span>
+            <h2 id="vehicleName">Yükleniyor...</h2>
+          </div>
         </div>
-      `;
-      return;
-    }
 
-    container.innerHTML = sorted
-      .map(
-        (record) => `
-          <article class="record">
-            <div class="record-main">
-              <strong>${formatDate(record.date)}</strong>
-              <small>
-                ${escapeHTML(record.fuelType)}
-                ${record.station ? ` • ${escapeHTML(record.station)}` : ""}
-                ${record.city ? ` • ${escapeHTML(record.city)}` : ""}
-              </small>
+        <p id="vehicleDetail" class="muted"></p>
 
-              <span class="badge ${
-                record.fullTank ? "badge-success" : "badge-warning"
-              }">
-                ${record.fullTank ? "✓ Tam depo" : "Kısmi dolum"}
-              </span>
-            </div>
+        <div class="odometer-box">
+          <span>Güncel kilometre</span>
+          <strong id="currentOdometer">—</strong>
+        </div>
 
-            <div class="record-metric">
-              <span>Yakıt</span>
-              <strong>${numberFormatter.format(record.liters)} L</strong>
-            </div>
+        <button id="openVehicleButton" class="button button-primary full-width" type="button">
+          🚘 Araç bilgileri
+        </button>
+      </aside>
+    </section>
 
-            <div class="record-metric">
-              <span>Tutar</span>
-              <strong>${currencyFormatter.format(record.amount)}</strong>
-            </div>
+    <section class="section">
+      <div class="section-title">
+        <div>
+          <h2>Genel bakış</h2>
+          <p>Yakıt kayıtlarından otomatik hesaplanan değerler</p>
+        </div>
+      </div>
 
-            <div class="record-metric">
-              <span>Mesafe</span>
-              <strong>${
-                record.calculationValid
-                  ? `${numberFormatter.format(record.distance)} km`
-                  : "—"
-              }</strong>
-            </div>
+      <div class="stats-grid">
+        <article class="stat-card"><span>Son geçerli tüketim</span><strong id="lastConsumption">—</strong></article>
+        <article class="stat-card"><span>Ortalama tüketim</span><strong id="averageConsumption">—</strong></article>
+        <article class="stat-card"><span>Toplam harcama</span><strong id="totalCost">₺0,00</strong></article>
+        <article class="stat-card"><span>Toplam mesafe</span><strong id="totalDistance">0 km</strong></article>
+        <article class="stat-card"><span>Ortalama km maliyeti</span><strong id="averageCostPerKm">—</strong></article>
+        <article class="stat-card"><span>Toplam yakıt</span><strong id="totalLiters">0 L</strong></article>
+        <article class="stat-card"><span>Bu ay harcanan</span><strong id="monthlyCost">₺0,00</strong></article>
+        <article class="stat-card"><span>Son litre fiyatı</span><strong id="lastLiterPrice">—</strong></article>
+      </div>
+    </section>
 
-            <div class="record-metric">
-              <span>Tüketim</span>
-              <strong>${
-                record.calculationValid
-                  ? `${numberFormatter.format(record.consumption)} L/100 km`
-                  : "—"
-              }</strong>
-            </div>
+    <section id="fuel-section" class="section">
+      <div class="section-title">
+        <div>
+          <h2 id="fuelFormTitle">Yeni yakıt kaydı</h2>
+          <p>Dolum bilgilerini eksiksiz gir.</p>
+        </div>
+      </div>
 
-            <div class="record-actions">
-              <button
-                class="button button-secondary button-small"
-                type="button"
-                data-action="edit"
-                data-id="${record.id}"
-              >
-                Düzenle
-              </button>
+      <form id="fuelForm" class="card">
+        <input id="editRecordId" type="hidden">
 
-              <button
-                class="button button-danger button-small"
-                type="button"
-                data-action="delete"
-                data-id="${record.id}"
-              >
-                Sil
-              </button>
-            </div>
-          </article>
-        `
-      )
-      .join("");
+        <div class="form-grid">
+          <label>Tarih<input id="fuelDate" type="date" required></label>
+          <label>Güncel kilometre<input id="odometer" type="number" min="0" step="1" required></label>
+          <label>Alınan yakıt (litre)<input id="liters" type="number" min="0.01" step="0.01" required></label>
+          <label>Toplam tutar (TL)<input id="amount" type="number" min="0.01" step="0.01" required></label>
 
-    container.querySelectorAll("[data-action='edit']").forEach((button) => {
-      button.addEventListener("click", () => handlers.onEdit(button.dataset.id));
-    });
+          <label>
+            Yakıt türü
+            <select id="fuelType" required>
+              <option value="Benzin">Benzin</option>
+              <option value="Dizel">Dizel</option>
+              <option value="LPG">LPG</option>
+            </select>
+          </label>
 
-    container.querySelectorAll("[data-action='delete']").forEach((button) => {
-      button.addEventListener("click", () => handlers.onDelete(button.dataset.id));
-    });
-  }
+          <label>Akaryakıt istasyonu<input id="station" type="text" maxlength="60" placeholder="Örn. Petrol Ofisi"></label>
+          <label>Şehir<input id="city" type="text" maxlength="40" placeholder="Örn. Ankara"></label>
 
-  function openModal(id) {
-    const modal = document.getElementById(id);
-    modal.classList.add("show");
-    modal.setAttribute("aria-hidden", "false");
-  }
+          <label class="checkbox-label">
+            <input id="fullTank" type="checkbox" checked>
+            <span>Depo tamamen dolduruldu</span>
+          </label>
 
-  function closeModal(id) {
-    const modal = document.getElementById(id);
-    modal.classList.remove("show");
-    modal.setAttribute("aria-hidden", "true");
-  }
+          <label class="full-column">Not<textarea id="note" maxlength="300" placeholder="İsteğe bağlı açıklama"></textarea></label>
+        </div>
 
-  return {
-    showToast,
-    renderVehicle,
-    renderStats,
-    renderRecords,
-    openModal,
-    closeModal
-  };
-})();
+        <div class="notice">
+          Kısmi dolumlar, sonraki tam doluma kadar biriktirilerek tüketim hesabına katılır.
+        </div>
+
+        <div class="form-actions">
+          <button id="cancelEditButton" class="button button-secondary hidden" type="button">İptal</button>
+          <button class="button button-primary" type="submit">💾 Kaydet</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="section">
+      <div class="section-title responsive-title">
+        <div>
+          <h2>Yakıt geçmişi</h2>
+          <p>Kayıtların Supabase veritabanından yüklenir.</p>
+        </div>
+      </div>
+      <div id="recordList" class="record-list"></div>
+    </section>
+  </main>
+
+  <div id="vehicleModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Araç bilgileri</h2>
+        <button id="closeVehicleButton" class="icon-button" type="button" aria-label="Kapat">×</button>
+      </div>
+
+      <form id="vehicleForm">
+        <div class="form-grid">
+          <label class="full-column">Araç adı<input id="vehicleNickname" type="text" maxlength="50" required></label>
+          <label>Marka<input id="brand" type="text" maxlength="40" required></label>
+          <label>Model<input id="model" type="text" maxlength="60" required></label>
+          <label>Model yılı<input id="year" type="number" min="1900" max="2100"></label>
+
+          <label>
+            Yakıt türü
+            <select id="vehicleFuelType">
+              <option value="Benzin">Benzin</option>
+              <option value="Dizel">Dizel</option>
+              <option value="LPG">LPG</option>
+            </select>
+          </label>
+
+          <label>Başlangıç kilometresi<input id="startOdometer" type="number" min="0" step="1" required></label>
+          <label>Plaka<input id="plate" type="text" maxlength="15" placeholder="06 ABC 123"></label>
+        </div>
+
+        <div class="form-actions">
+          <button id="cancelVehicleButton" class="button button-secondary" type="button">Vazgeç</button>
+          <button class="button button-primary" type="submit">Aracı kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="loading-box">Yükleniyor...</div>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/auth-guard.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/calculations.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
